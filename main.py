@@ -5,7 +5,7 @@ def parse():
     with open("./data/second.lox") as code_file:
         lines = code_file.readlines()
         tokenizer = Tokenizer(source="".join(lines))
-        tokenizer._parse()
+        tokenizer.parse()
 
 
 if __name__ == "__main__":

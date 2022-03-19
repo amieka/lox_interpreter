@@ -71,31 +71,28 @@ class Tokenizer:
         self.source = source
         self.char_idx: int = 0
 
-    def _scan_next(self):
-        pass
-
-    def _stop_scan(self):
-        pass
-
     def is_digit(self, c):
         return c >= "0" and c <= "9"
 
-    def _parse_operators(self, token: str):
+    def undo_last(self):
+        self.char_idx -= 1
+
+    def parse_operators(self, token: str):
         lexem = token
-        next_token = self._get_next_token()
+        next_token = self.get_next_token()
         lexem += next_token
         if lexem == TokenType.EQUAL_EQUAL.value:
-            self._add_token(lexem)
+            self.add_token(lexem)
         elif lexem == TokenType.BANG_EQUAL.value:
-            self._add_token(lexem)
+            self.add_token(lexem)
         elif lexem == TokenType.GREATER_EQUAL.value:
-            self._add_token(lexem)
+            self.add_token(lexem)
         elif lexem == TokenType.LESS_EQUAL.value:
-            self._add_token(lexem)
+            self.add_token(lexem)
         else:
-            self._add_token(token)
+            self.add_token(token)
 
-    def _parse_characters(
+    def parse_characters(
         self,
         next_token: str,
         has_quotes: bool = False,
@@ -104,7 +101,7 @@ class Tokenizer:
         lexem = next_token
         done = False
         while not done:
-            next_token = self._get_next_token()
+            next_token = self.get_next_token()
             if (
                 next_token == " "
                 and not has_quotes
@@ -115,52 +112,52 @@ class Tokenizer:
                 or not next_token
             ):
                 done = True
-                self._add_token(lexem)
+                self.add_token(lexem)
             elif next_token == '"':
                 done = True
                 lexem += next_token
-                self._add_token(lexem)
+                self.add_token(lexem)
             elif has_digits and not self.is_digit(next_token):
                 done = True
-                self.char_idx -= 1
-                self._add_token(lexem)
+                self.undo_last()
+                self.add_token(lexem)
             else:
                 lexem += next_token
 
-    def _parse_number(self, token: str):
+    def parse_number(self, token: str):
         pass
 
-    def _scan(self):
+    def scan(self):
         while self.has_more_tokens:
-            next_token = self._get_next_token()
+            next_token = self.get_next_token()
             if next_token == " " or next_token == "\n" or next_token == "\t":
                 continue
             if next_token == TokenType.EQUAL.value:
-                self._parse_operators(next_token)
+                self.parse_operators(next_token)
             elif next_token == TokenType.BANG.value:
-                self._parse_operators(next_token)
+                self.parse_operators(next_token)
             elif next_token == TokenType.GREATER.value:
-                self._parse_operators(next_token)
+                self.parse_operators(next_token)
             elif next_token == TokenType.LESS.value:
-                self._parse_operators(next_token)
+                self.parse_operators(next_token)
             elif next_token == TokenType.SEMICOLON.value:
-                self._add_token(next_token)
+                self.add_token(next_token)
             elif next_token >= "a" and next_token <= "z":
-                self._parse_characters(next_token)
+                self.parse_characters(next_token)
             elif next_token == '"':
-                self._parse_characters(next_token, True)
+                self.parse_characters(next_token, True)
             elif self.is_digit(next_token):
-                self._parse_characters(next_token, False, True)
+                self.parse_characters(next_token, False, True)
             elif next_token == TokenType.LEFT_BRACE.value:
-                self._add_token(next_token)
+                self.add_token(next_token)
             elif next_token == TokenType.RIGHT_BRACE.value:
-                self._add_token(next_token)
+                self.add_token(next_token)
             elif next_token == TokenType.LEFT_PAREN.value:
-                self._add_token(next_token)
+                self.add_token(next_token)
             elif next_token == TokenType.RIGHT_PAREN.value:
-                self._add_token(next_token)
+                self.add_token(next_token)
 
-    def _get_next_token(self):
+    def get_next_token(self):
         if self.char_idx == len(self.source) - 1:
             self.has_more_tokens = False
             return self.source[self.char_idx]
@@ -168,9 +165,9 @@ class Tokenizer:
         self.char_idx += 1
         return r
 
-    def _add_token(self, lexem: str):
+    def add_token(self, lexem: str):
         self.tokens.append(lexem)
 
-    def _parse(self):
-        self._scan()
+    def parse(self):
+        self.scan()
         print(self.tokens)
