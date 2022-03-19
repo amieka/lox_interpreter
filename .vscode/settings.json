@@ -1,0 +1,19 @@
+{
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "python.formatting.provider": "black",
+    "python.formatting.blackArgs": ["--line-length", "80"],
+    "[python]": {
+        "editor.formatOnPaste": true,
+        "editor.formatOnSave": true
+    },
+    "[yaml]": {
+        "editor.tabSize": 2,
+        "editor.quickSuggestions": {
+            "other": true,
+            "comments": false,
+            "strings": true
+        },
+        "editor.formatOnSave": true,
+    },
+    "python.defaultInterpreterPath": "/usr/local/Cellar/python@3.8/3.8.12_1/bin/python3.8"
+}

@@ -1,0 +1,6 @@
+{
+    var number = 23;
+    var some_string = "hello world";
+    var some_other_string = "hey man this one has lines
+    . thats what i am talking about";
+}

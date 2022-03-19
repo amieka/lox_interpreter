@@ -1,0 +1,29 @@
+[project]
+name = ""
+version = ""
+description = ""
+authors = [
+    {name = "Arunoday Sarkar", email = "asarka696@cable.comcast.com"},
+]
+dependencies = []
+requires-python = ">=3.8"
+dynamic = ["classifiers"]
+license = {text = "MIT"}
+
+[project.urls]
+homepage = ""
+
+
+[project.optional-dependencies]
+[build-system]
+requires = ["pdm-pep517"]
+build-backend = "pdm.pep517.api"
+
+[tool]
+[tool.pdm]
+[tool.pdm.scripts]
+dev = "python3 parse.py"
+[tool.pdm.dev-dependencies]
+dev = [
+    "black~=22.1",
+]
