@@ -5,6 +5,14 @@ from typing import Optional, List
 from enum import Enum, auto
 
 
+class UnsupportedNumberException(BaseException):
+    pass
+
+
+class UnsupportedCharacterException(BaseException):
+    pass
+
+
 class TokenType(Enum):
     LEFT_PAREN = "{"
     RIGHT_PAREN = "}"
@@ -51,7 +59,11 @@ class TokenType(Enum):
     VAR = "var"
     WHILE = "while"
 
+    # SPACE, TABS, NEWLINE
     EOF = auto()
+    SPACE = " "
+    TAB = "\t"
+    NEWLINE = "\n"
 
 
 # Holds additional data for each token
@@ -73,6 +85,9 @@ class Tokenizer:
 
     def is_digit(self, c):
         return c >= "0" and c <= "9"
+
+    def is_alpha(self, c):
+        return c >= "a" and c <= "z"
 
     def undo_last(self):
         self.char_idx -= 1
@@ -125,12 +140,41 @@ class Tokenizer:
                 lexem += next_token
 
     def parse_number(self, token: str):
-        pass
+        lexem = token
+        done = False
+        decimal_count = 0
+        while not done:
+            next_token = self.get_next_token()
+            if (
+                next_token == TokenType.SPACE.value
+                or next_token == TokenType.TAB.value
+                or next_token == TokenType.NEWLINE.value
+            ):
+                raise UnsupportedNumberException()
+            elif decimal_count > 1:
+                raise UnsupportedNumberException()
+            elif self.is_alpha(next_token):
+                raise UnsupportedNumberException()
+            elif next_token == TokenType.DOT.value:
+                lexem += next_token
+                decimal_count += 1
+                continue
+            elif not self.is_digit(next_token):
+                self.undo_last()
+                done = True
+                self.add_token(lexem)
+            else:
+                lexem += next_token
 
     def scan(self):
         while self.has_more_tokens:
             next_token = self.get_next_token()
-            if next_token == " " or next_token == "\n" or next_token == "\t":
+            # skip over space, tabs and new line
+            if (
+                next_token == TokenType.SPACE.value
+                or next_token == TokenType.NEWLINE.value
+                or next_token == TokenType.TAB.value
+            ):
                 continue
             if next_token == TokenType.EQUAL.value:
                 self.parse_operators(next_token)
@@ -142,12 +186,13 @@ class Tokenizer:
                 self.parse_operators(next_token)
             elif next_token == TokenType.SEMICOLON.value:
                 self.add_token(next_token)
-            elif next_token >= "a" and next_token <= "z":
+            elif self.is_alpha(next_token):
                 self.parse_characters(next_token)
             elif next_token == '"':
                 self.parse_characters(next_token, True)
             elif self.is_digit(next_token):
-                self.parse_characters(next_token, False, True)
+                # self.parse_characters(next_token, False, True)
+                self.parse_number(next_token)
             elif next_token == TokenType.LEFT_BRACE.value:
                 self.add_token(next_token)
             elif next_token == TokenType.RIGHT_BRACE.value:
