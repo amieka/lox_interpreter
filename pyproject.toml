@@ -22,7 +22,7 @@ build-backend = "pdm.pep517.api"
 [tool]
 [tool.pdm]
 [tool.pdm.scripts]
-dev = "python3 parse.py"
+dev = "python3 main.py"
 [tool.pdm.dev-dependencies]
 dev = [
     "black~=22.1",
