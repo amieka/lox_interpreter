@@ -64,13 +64,12 @@ class Token:
 
 
 class Tokenizer:
-    def __init__(self, scan_lines: Optional[List]):
+    def __init__(self, source: str):
         self.tokens: Optional[List[str]] = []
-        self.has_more_tokens: bool = False
-        self.scan_lines: Optional[List] = scan_lines
-        self.lines_to_scan: int = len(scan_lines)
-        self.line_cursor: int = 0
+        self.has_more_tokens: bool = True
         self.current_line: str = ""
+        self.source = source
+        self.char_idx: int = 0
 
     def _scan_next(self):
         pass
@@ -80,8 +79,7 @@ class Tokenizer:
 
     def _parse_operators(self, token: str):
         lexem = token
-        line = self.current_line
-        next_token = self._get_next_token(line)
+        next_token = self._get_next_token()
         lexem += next_token
         if lexem == TokenType.EQUAL_EQUAL.value:
             self._add_token(lexem)
@@ -97,9 +95,8 @@ class Tokenizer:
     def _parse_characters(self, next_token: str, has_quotes: bool = False):
         lexem = next_token
         done = False
-        line = self.current_line
         while not done:
-            next_token = self._get_next_token(line)
+            next_token = self._get_next_token()
             if (
                 next_token == " "
                 and not has_quotes
@@ -107,7 +104,7 @@ class Tokenizer:
                 and not has_quotes
                 or next_token == "\n"
                 and not has_quotes
-                or self.line_cursor == len(line)
+                or not next_token
             ):
                 done = True
                 self._add_token(lexem)
@@ -121,11 +118,9 @@ class Tokenizer:
     def _parse_number(self, token: str):
         pass
 
-    def _parse_line(self, line: str):
-        self.line_cursor = 0
-        self.current_line = line
-        while self.line_cursor < len(line):
-            next_token = self._get_next_token(line)
+    def _scan(self):
+        while self.has_more_tokens:
+            next_token = self._get_next_token()
             if next_token == " " or next_token == "\n" or next_token == "\t":
                 continue
             if next_token == TokenType.EQUAL.value:
@@ -153,32 +148,26 @@ class Tokenizer:
             elif next_token == TokenType.RIGHT_PAREN.value:
                 self._add_token(next_token)
 
-                # parse a begining of a double quoted string
-
-    def _get_next_token(self, line: str):
-        if self.line_cursor == len(line):
-            return line[self.line_cursor]
-        r = line[self.line_cursor]
-        self.line_cursor += 1
+    def _get_next_token(self):
+        if self.char_idx == len(self.source) - 1:
+            self.has_more_tokens = False
+            return self.source[self.char_idx]
+        r = self.source[self.char_idx]
+        self.char_idx += 1
         return r
 
     def _add_token(self, lexem: str):
         self.tokens.append(lexem)
 
     def _parse(self):
-        for line in self.scan_lines:
-            self._parse_line(line)
+        self._scan()
         print(self.tokens)
-
-    # def __call__(self):
-    #     # start parsing
-    #     self._parse()
 
 
 def parse():
     with open("second.lox") as code_file:
         lines = code_file.readlines()
-        tokenizer = Tokenizer(scan_lines=lines)
+        tokenizer = Tokenizer(source="".join(lines))
         tokenizer._parse()
 
 
