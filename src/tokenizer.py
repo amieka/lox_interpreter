@@ -25,6 +25,7 @@ class TokenType(Enum):
     SEMICOLON = ";"
     SLASH = "\/"
     STAR = "*"
+    SINGLE_QUOTE = '"'
 
     # One or two character tokens.
     BANG = "!"
@@ -68,10 +69,13 @@ class TokenType(Enum):
 
 # Holds additional data for each token
 class Token:
-    def __init__(self, token_type: TokenType, lexem: str, cursor: int):
+    def __init__(
+        self, token_type: TokenType, lexem: str, start_pos: int, end_pos: int
+    ):
         self.token_type: TokenType = token_type
         self.lexem: str = lexem
-        self.cursor: int = 0
+        self.start_pos: int = start_pos
+        self.end_pos: int = end_pos
         self.length = len(lexem)
 
 
@@ -118,17 +122,17 @@ class Tokenizer:
         while not done:
             next_token = self.get_next_token()
             if (
-                next_token == " "
+                next_token == TokenType.SPACE.value
                 and not has_quotes
-                or next_token == "\t"
+                or next_token == TokenType.TAB.value
                 and not has_quotes
-                or next_token == "\n"
+                or next_token == TokenType.NEWLINE.value
                 and not has_quotes
                 or not next_token
             ):
                 done = True
                 self.add_token(lexem)
-            elif next_token == '"':
+            elif next_token == TokenType.SINGLE_QUOTE.value:
                 done = True
                 lexem += next_token
                 self.add_token(lexem)
@@ -188,10 +192,9 @@ class Tokenizer:
                 self.add_token(next_token)
             elif self.is_alpha(next_token):
                 self.parse_characters(next_token)
-            elif next_token == '"':
+            elif next_token == TokenType.SINGLE_QUOTE.value:
                 self.parse_characters(next_token, True)
             elif self.is_digit(next_token):
-                # self.parse_characters(next_token, False, True)
                 self.parse_number(next_token)
             elif next_token == TokenType.LEFT_BRACE.value:
                 self.add_token(next_token)
