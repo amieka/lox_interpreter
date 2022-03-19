@@ -1,5 +1,5 @@
 {
-    var number = 23;
+    var number = 0.23;
     var second_float = 23.40;
     var some_string = "hello world";
     var some_other_string = "hey man this one has lines

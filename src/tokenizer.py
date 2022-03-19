@@ -143,6 +143,11 @@ class Tokenizer:
             else:
                 lexem += next_token
 
+    def check_unsupported_number(self):
+        if self.is_digit(self.get_next_token()):
+            self.undo_last()
+            raise UnsupportedNumberException()
+
     def parse_number(self, token: str):
         lexem = token
         done = False
@@ -204,6 +209,8 @@ class Tokenizer:
                 self.add_token(next_token)
             elif next_token == TokenType.RIGHT_PAREN.value:
                 self.add_token(next_token)
+            elif next_token == TokenType.DOT.value:
+                self.check_unsupported_number()
 
     def get_next_token(self):
         if self.char_idx == len(self.source) - 1:
