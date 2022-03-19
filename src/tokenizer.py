@@ -77,6 +77,9 @@ class Tokenizer:
     def _stop_scan(self):
         pass
 
+    def is_digit(self, c):
+        return c >= "0" and c <= "9"
+
     def _parse_operators(self, token: str):
         lexem = token
         next_token = self._get_next_token()
@@ -92,7 +95,12 @@ class Tokenizer:
         else:
             self._add_token(token)
 
-    def _parse_characters(self, next_token: str, has_quotes: bool = False):
+    def _parse_characters(
+        self,
+        next_token: str,
+        has_quotes: bool = False,
+        has_digits: bool = False,
+    ):
         lexem = next_token
         done = False
         while not done:
@@ -111,6 +119,10 @@ class Tokenizer:
             elif next_token == '"':
                 done = True
                 lexem += next_token
+                self._add_token(lexem)
+            elif has_digits and not self.is_digit(next_token):
+                done = True
+                self.char_idx -= 1
                 self._add_token(lexem)
             else:
                 lexem += next_token
@@ -137,8 +149,8 @@ class Tokenizer:
                 self._parse_characters(next_token)
             elif next_token == '"':
                 self._parse_characters(next_token, True)
-            elif next_token >= "0" and next_token <= "9":
-                self._parse_characters(next_token)
+            elif self.is_digit(next_token):
+                self._parse_characters(next_token, False, True)
             elif next_token == TokenType.LEFT_BRACE.value:
                 self._add_token(next_token)
             elif next_token == TokenType.RIGHT_BRACE.value:
