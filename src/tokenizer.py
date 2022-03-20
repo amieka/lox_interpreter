@@ -13,6 +13,10 @@ class UnsupportedCharacterException(BaseException):
     pass
 
 
+class UnsupportedCommentException(BaseException):
+    pass
+
+
 class TokenType(Enum):
     LEFT_PAREN = "{"
     RIGHT_PAREN = "}"
@@ -23,7 +27,7 @@ class TokenType(Enum):
     MINUS = "-"
     PLUS = "+"
     SEMICOLON = ";"
-    SLASH = "\/"
+    SLASH = "/"
     STAR = "*"
     SINGLE_QUOTE = '"'
 
@@ -175,6 +179,24 @@ class Tokenizer:
             else:
                 lexem += next_token
 
+    def capture_comments(self):
+        done = False
+        lexem = ""
+        next_token = self.get_next_token()
+        if not next_token == TokenType.SLASH.value:
+            raise UnsupportedCommentException()
+        if next_token == TokenType.SLASH.value:
+            while not done:
+                next_token = self.get_next_token()
+                lexem += next_token
+                if next_token == TokenType.NEWLINE.value:
+                    done = True
+                    self.undo_last()
+                    self.add_token(lexem)
+
+    def advance_char(self):
+        self.char_idx += 1
+
     def scan(self):
         while self.has_more_tokens:
             next_token = self.get_next_token()
@@ -210,7 +232,9 @@ class Tokenizer:
             elif next_token == TokenType.RIGHT_PAREN.value:
                 self.add_token(next_token)
             elif next_token == TokenType.DOT.value:
-                self.check_unsupported_number()
+                self.check_unsupported_number()  # there is a better way to handle this ?
+            elif next_token == TokenType.SLASH.value:
+                self.capture_comments()
 
     def get_next_token(self):
         if self.char_idx == len(self.source) - 1:
