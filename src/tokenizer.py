@@ -42,9 +42,9 @@ class TokenType(Enum):
     LESS_EQUAL = "<="
 
     # Literals.
-    IDENTIFIER = auto()
-    STRING = auto()
-    NUMBER = auto()
+    IDENTIFIER = "IDENTIFIER"
+    STRING = "STRING"
+    NUMBER = "NUMBER"
 
     # Keywords.
     AND = "&&"
@@ -85,7 +85,8 @@ class Token:
 
 class Tokenizer:
     def __init__(self, source: str):
-        self.tokens: Optional[List[str]] = []
+        self.tokens: Optional[List[Token]] = []
+        self.keywords: Optional[List[str]] = []
         self.has_more_tokens: bool = True
         self.current_line: str = ""
         self.source = source
@@ -95,7 +96,7 @@ class Tokenizer:
         return c >= "0" and c <= "9"
 
     def is_alpha(self, c):
-        return c >= "a" and c <= "z"
+        return c >= "a" and c <= "z" or c >= "A" and c <= "Z"
 
     def undo_last(self):
         self.char_idx -= 1
@@ -115,6 +116,13 @@ class Tokenizer:
         else:
             self.add_token(token)
 
+    def capture_keywords(self, lexem: str, start_pos: int, end_pos: int):
+        token_type: TokenType = None
+        if not TokenType[lexem]:
+            self.add_token(lexem, start_pos, end_pos, TokenType.IDENTIFIER)
+        else:
+            self.add_token(lexem, start_pos, end_pos, TokenType[lexem])
+
     def parse_characters(
         self,
         next_token: str,
@@ -123,6 +131,7 @@ class Tokenizer:
     ):
         lexem = next_token
         done = False
+        start_pos = self.char_idx
         while not done:
             next_token = self.get_next_token()
             if (
@@ -135,15 +144,14 @@ class Tokenizer:
                 or not next_token
             ):
                 done = True
-                self.add_token(lexem)
+                # check for keywords here
+                end_pos = self.char_idx
+                self.capture_keywords(lexem, start_pos, end_pos)
             elif next_token == TokenType.SINGLE_QUOTE.value:
                 done = True
                 lexem += next_token
-                self.add_token(lexem)
-            elif has_digits and not self.is_digit(next_token):
-                done = True
-                self.undo_last()
-                self.add_token(lexem)
+                end_pos = self.char_idx
+                self.add_token(lexem, start_pos, end_pos, TokenType.STRING)
             else:
                 lexem += next_token
 
@@ -156,6 +164,7 @@ class Tokenizer:
         lexem = token
         done = False
         decimal_count = 0
+        start_pos = self.char_idx
         while not done:
             next_token = self.get_next_token()
             if (
@@ -175,7 +184,8 @@ class Tokenizer:
             elif not self.is_digit(next_token):
                 self.undo_last()
                 done = True
-                self.add_token(lexem)
+                end_pos = self.char_idx
+                self.add_token(lexem, start_pos, end_pos, TokenType.NUMBER)
             else:
                 lexem += next_token
 
@@ -244,9 +254,15 @@ class Tokenizer:
         self.char_idx += 1
         return r
 
-    def add_token(self, lexem: str):
-        self.tokens.append(lexem)
+    # def add_token(self, lexem: str):
+    #     self.tokens.append(lexem)
+
+    def add_token(
+        self, lexem: str, start_pos: int, end_pos: int, token_type: TokenType
+    ):
+        t_token = Token(token_type, lexem, start_pos, end_pos)
+        self.tokens.append(t_token)
 
     def parse(self):
         self.scan()
-        print(self.tokens)
+        # print(self.tokens)
