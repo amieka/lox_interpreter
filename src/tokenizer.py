@@ -103,25 +103,28 @@ class Tokenizer:
 
     def parse_operators(self, token: str):
         lexem = token
+        start_pos = self.char_idx
         next_token = self.get_next_token()
+        end_pos = self.char_idx
         lexem += next_token
         if lexem == TokenType.EQUAL_EQUAL.value:
-            self.add_token(lexem)
+            self.add_token(lexem, start_pos, end_pos, TokenType.EQUAL_EQUAL)
         elif lexem == TokenType.BANG_EQUAL.value:
-            self.add_token(lexem)
+            self.add_token(lexem, start_pos, end_pos, TokenType.BANG_EQUAL)
         elif lexem == TokenType.GREATER_EQUAL.value:
-            self.add_token(lexem)
+            self.add_token(lexem, start_pos, end_pos, TokenType.GREATER_EQUAL)
         elif lexem == TokenType.LESS_EQUAL.value:
-            self.add_token(lexem)
+            self.add_token(lexem, start_pos, end_pos, TokenType.LESS_EQUAL)
         else:
-            self.add_token(token)
+            self.add_token(lexem, start_pos, end_pos, TokenType.LESS_EQUAL)
 
     def capture_keywords(self, lexem: str, start_pos: int, end_pos: int):
-        token_type: TokenType = None
-        if not TokenType[lexem]:
-            self.add_token(lexem, start_pos, end_pos, TokenType.IDENTIFIER)
-        else:
-            self.add_token(lexem, start_pos, end_pos, TokenType[lexem])
+        # token_type: TokenType = None
+        # if not TokenType[lexem.upper()]:
+        #     self.add_token(lexem, start_pos, end_pos, TokenType.IDENTIFIER)
+        # else:
+        #     self.add_token(lexem, start_pos, end_pos, TokenType[lexem])
+        self.add_token(lexem, start_pos, end_pos, TokenType.IDENTIFIER)
 
     def parse_characters(
         self,
@@ -192,7 +195,9 @@ class Tokenizer:
     def capture_comments(self):
         done = False
         lexem = ""
+        start_pos = self.char_idx
         next_token = self.get_next_token()
+        # TODO: capture c style comments
         if not next_token == TokenType.SLASH.value:
             raise UnsupportedCommentException()
         if next_token == TokenType.SLASH.value:
@@ -202,14 +207,19 @@ class Tokenizer:
                 if next_token == TokenType.NEWLINE.value:
                     done = True
                     self.undo_last()
-                    self.add_token(lexem)
+                    end_pos = self.char_idx
+                    self.add_token(
+                        lexem, start_pos, end_pos, TokenType.SEMICOLON
+                    )
 
     def advance_char(self):
         self.char_idx += 1
 
     def scan(self):
+        start_pos = self.char_idx
         while self.has_more_tokens:
             next_token = self.get_next_token()
+            end_pos = self.char_idx
             # skip over space, tabs and new line
             if (
                 next_token == TokenType.SPACE.value
@@ -226,7 +236,9 @@ class Tokenizer:
             elif next_token == TokenType.LESS.value:
                 self.parse_operators(next_token)
             elif next_token == TokenType.SEMICOLON.value:
-                self.add_token(next_token)
+                self.add_token(
+                    next_token, start_pos, end_pos, TokenType.SEMICOLON
+                )
             elif self.is_alpha(next_token):
                 self.parse_characters(next_token)
             elif next_token == TokenType.SINGLE_QUOTE.value:
@@ -234,13 +246,21 @@ class Tokenizer:
             elif self.is_digit(next_token):
                 self.parse_number(next_token)
             elif next_token == TokenType.LEFT_BRACE.value:
-                self.add_token(next_token)
+                self.add_token(
+                    next_token, start_pos, end_pos, TokenType.LEFT_BRACE
+                )
             elif next_token == TokenType.RIGHT_BRACE.value:
-                self.add_token(next_token)
+                self.add_token(
+                    next_token, start_pos, end_pos, TokenType.RIGHT_BRACE
+                )
             elif next_token == TokenType.LEFT_PAREN.value:
-                self.add_token(next_token)
+                self.add_token(
+                    next_token, start_pos, end_pos, TokenType.LEFT_PAREN
+                )
             elif next_token == TokenType.RIGHT_PAREN.value:
-                self.add_token(next_token)
+                self.add_token(
+                    next_token, start_pos, end_pos, TokenType.RIGHT_PAREN
+                )
             elif next_token == TokenType.DOT.value:
                 self.check_unsupported_number()  # there is a better way to handle this ?
             elif next_token == TokenType.SLASH.value:
@@ -265,4 +285,6 @@ class Tokenizer:
 
     def parse(self):
         self.scan()
-        # print(self.tokens)
+        # print(str(self.tokens))
+        for t in self.tokens:
+            print(f"{t.start_pos}, {t.end_pos}, {t.lexem}, {t.token_type}")
