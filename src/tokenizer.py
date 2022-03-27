@@ -109,6 +109,14 @@ class Tokenizer:
     def undo_last(self):
         self.char_idx -= 1
 
+    def has_more_tokens(self):
+        return self.char_idx == len(self.source) - 1
+
+    def peek_next(self):
+        if not self.has_more_tokens:
+            return self.source[-1]
+        return self.source[self.char_idx + 1]
+
     def parse_operators(self, token: str):
         lexem = token
         start_pos = self.char_idx
@@ -127,12 +135,6 @@ class Tokenizer:
             self.add_token(lexem, start_pos, end_pos, TokenType.LESS_EQUAL)
 
     def capture_keywords(self, lexem: str, start_pos: int, end_pos: int):
-        # token_type: TokenType = None
-        # if not TokenType[lexem.upper()]:
-        #     self.add_token(lexem, start_pos, end_pos, TokenType.IDENTIFIER)
-        # else:
-        #     self.add_token(lexem, start_pos, end_pos, TokenType[lexem])
-        print(f"possible keyword {lexem}")
         if _KEYWORDS.get(lexem.upper()) is not None:
             self.add_token(lexem, start_pos, end_pos, TokenType.KEYWORDS)
         else:
@@ -204,23 +206,40 @@ class Tokenizer:
             else:
                 lexem += next_token
 
-    def capture_comments(self):
+    def capture_comments(self, cur_token: str):
         done = False
         lexem = ""
         start_pos = self.char_idx
-        next_token = self.get_next_token()
-        # TODO: capture c style comments
-        if not next_token == TokenType.SLASH.value:
-            raise UnsupportedCommentException()
-        if next_token == TokenType.SLASH.value:
+        r = self.get_next_token()
+        # TODO: How do we handle an unclosed c style comment ?
+        # example : /* text ...
+        # read until the EOF
+        if r == TokenType.SLASH.value:
             while not done:
-                next_token = self.get_next_token()
-                lexem += next_token
-                if next_token == TokenType.NEWLINE.value:
+                # consume more characters
+                r = self.get_next_token()
+                if r == TokenType.NEWLINE.value or r == TokenType.STAR.value:
                     done = True
-                    self.undo_last()
-                    end_pos = self.char_idx
-                    self.add_token(lexem, start_pos, end_pos, TokenType.COMMENT)
+                lexem += r
+        if r == TokenType.STAR.value:
+            while not done:
+                # consume more characters
+                r = self.get_next_token()
+                if r == TokenType.SLASH.value:
+                    raise UnsupportedCommentException()
+                if r == TokenType.STAR.value:
+                    r = self.get_next_token()
+                    if r == TokenType.SLASH.value:
+                        done = True
+                else:
+                    lexem += r
+
+        # else:
+        #     raise UnsupportedCommentException()
+
+        self.add_token(
+            lexem, start_pos, start_pos + len(lexem), TokenType.COMMENT
+        )
 
     def advance_char(self):
         self.char_idx += 1
@@ -274,7 +293,7 @@ class Tokenizer:
             elif next_token == TokenType.DOT.value:
                 self.check_unsupported_number()  # there is a better way to handle this ?
             elif next_token == TokenType.SLASH.value:
-                self.capture_comments()
+                self.capture_comments(next_token)
 
     def get_next_token(self):
         if self.char_idx == len(self.source) - 1:

@@ -5,4 +5,10 @@
     var some_other_string = "hey man this one has lines
     . thats what i am talking about";
     // second comment.
+    /* c style comment */
+    /* a multi line  
+        c style comment 
+    */
+    var num = 123;
+    /* yet another comment */
 }
