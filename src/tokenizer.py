@@ -17,6 +17,26 @@ class UnsupportedCommentException(BaseException):
     pass
 
 
+_KEYWORDS = {
+    "AND": "&&",
+    "CLASS": "class",
+    "ELSE": "else",
+    "FALSE": "false",
+    "FUN": "fun",
+    "FOR": "for",
+    "IF": "if",
+    "NIL": "nil",
+    "OR": "||",
+    "PRINT": "print",
+    "RETURN": "return",
+    "SUPER": "super",
+    "THIS": "this",
+    "TRUE": "true",
+    "VAR": "var",
+    "WHILE": "while",
+}
+
+
 class TokenType(Enum):
     LEFT_PAREN = "{"
     RIGHT_PAREN = "}"
@@ -46,29 +66,17 @@ class TokenType(Enum):
     STRING = "STRING"
     NUMBER = "NUMBER"
 
-    # Keywords.
-    AND = "&&"
-    CLASS = "class"
-    ELSE = "else"
-    FALSE = "false"
-    FUN = "fun"
-    FOR = "for"
-    IF = "if"
-    NIL = "nil"
-    OR = "||"
-    PRINT = "print"
-    RETURN = "return"
-    SUPER = "super"
-    THIS = "this"
-    TRUE = "true"
-    VAR = "var"
-    WHILE = "while"
-
     # SPACE, TABS, NEWLINE
     EOF = auto()
     SPACE = " "
     TAB = "\t"
     NEWLINE = "\n"
+
+    # keywords
+    KEYWORDS = "KEYWORDS"
+
+    # comments
+    COMMENT = "COMMENT"
 
 
 # Holds additional data for each token
@@ -124,7 +132,11 @@ class Tokenizer:
         #     self.add_token(lexem, start_pos, end_pos, TokenType.IDENTIFIER)
         # else:
         #     self.add_token(lexem, start_pos, end_pos, TokenType[lexem])
-        self.add_token(lexem, start_pos, end_pos, TokenType.IDENTIFIER)
+        print(f"possible keyword {lexem}")
+        if _KEYWORDS.get(lexem.upper()) is not None:
+            self.add_token(lexem, start_pos, end_pos, TokenType.KEYWORDS)
+        else:
+            self.add_token(lexem, start_pos, end_pos, TokenType.IDENTIFIER)
 
     def parse_characters(
         self,
