@@ -26,4 +26,6 @@ dev = "python3 main.py"
 [tool.pdm.dev-dependencies]
 dev = [
     "black~=22.1",
+    "click~=8.0",
+    "colorama~=0.4",
 ]

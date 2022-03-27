@@ -2,7 +2,7 @@ from src.tokenizer import Tokenizer
 
 
 def parse():
-    with open("./data/second.lox") as code_file:
+    with open("./data/ex_fun.lox") as code_file:
         lines = code_file.readlines()
         tokenizer = Tokenizer(source="".join(lines))
         tokenizer.parse()

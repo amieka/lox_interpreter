@@ -17,6 +17,10 @@ class UnsupportedCommentException(BaseException):
     pass
 
 
+class LexerError(BaseException):
+    pass
+
+
 _KEYWORDS = {
     "AND": "&&",
     "CLASS": "class",
@@ -104,7 +108,18 @@ class Tokenizer:
         return c >= "0" and c <= "9"
 
     def is_alpha(self, c):
-        return c >= "a" and c <= "z" or c >= "A" and c <= "Z"
+        return c >= "a" and c <= "z" or c >= "A" and c <= "Z" or c == "_"
+
+    def is_alphanum(self, c):
+        return (
+            c >= "a"
+            and c <= "z"
+            or c >= "A"
+            and c <= "Z"
+            or c == "_"
+            or c >= "0"
+            and c <= "9"
+        )
 
     def undo_last(self):
         self.char_idx -= 1
@@ -163,6 +178,12 @@ class Tokenizer:
                 done = True
                 # check for keywords here
                 end_pos = self.char_idx
+                self.capture_keywords(lexem, start_pos, end_pos)
+            elif not self.is_alphanum(next_token):
+                done = True
+                # check for keywords here
+                end_pos = self.char_idx
+                self.undo_last()
                 self.capture_keywords(lexem, start_pos, end_pos)
             elif next_token == TokenType.SINGLE_QUOTE.value:
                 done = True
