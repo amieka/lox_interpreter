@@ -1,0 +1,5 @@
+fun(first_1, second_1) {
+    var num = 10;
+    /* test comment */
+    return num;
+}
