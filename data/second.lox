@@ -6,4 +6,6 @@
     . thats what i am talking about";
     // second comment.
     /* c style comment */
+    /* closing comment 
+    not found */
 }

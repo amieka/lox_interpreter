@@ -109,7 +109,7 @@ class Tokenizer:
     def undo_last(self):
         self.char_idx -= 1
 
-    def has_more_tokens(self):
+    def is_eof(self):
         return self.char_idx == len(self.source) - 1
 
     def peek_next(self):
@@ -225,6 +225,11 @@ class Tokenizer:
             while not done:
                 # consume more characters
                 r = self.get_next_token()
+                if self.is_eof():
+                    # reached the end of file
+                    raise Exception(
+                        "closing comments not found. lexer will exit"
+                    )
                 if r == TokenType.SLASH.value:
                     raise UnsupportedCommentException()
                 if r == TokenType.STAR.value:
