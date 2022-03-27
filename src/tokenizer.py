@@ -221,7 +221,7 @@ class Tokenizer:
                 if r == TokenType.NEWLINE.value or r == TokenType.STAR.value:
                     done = True
                 lexem += r
-        if r == TokenType.STAR.value:
+        elif r == TokenType.STAR.value:
             while not done:
                 # consume more characters
                 r = self.get_next_token()
@@ -233,9 +233,8 @@ class Tokenizer:
                         done = True
                 else:
                     lexem += r
-
-        # else:
-        #     raise UnsupportedCommentException()
+        else:
+            raise UnsupportedCommentException()
 
         self.add_token(
             lexem, start_pos, start_pos + len(lexem), TokenType.COMMENT
