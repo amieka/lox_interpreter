@@ -220,9 +220,7 @@ class Tokenizer:
                     done = True
                     self.undo_last()
                     end_pos = self.char_idx
-                    self.add_token(
-                        lexem, start_pos, end_pos, TokenType.SEMICOLON
-                    )
+                    self.add_token(lexem, start_pos, end_pos, TokenType.COMMENT)
 
     def advance_char(self):
         self.char_idx += 1
