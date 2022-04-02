@@ -103,6 +103,7 @@ class Tokenizer:
         self.current_line: str = ""
         self.source = source
         self.char_idx: int = 0
+        self.lines: int = 0
 
     def is_digit(self, c):
         return c >= "0" and c <= "9"
@@ -111,18 +112,13 @@ class Tokenizer:
         return c >= "a" and c <= "z" or c >= "A" and c <= "Z" or c == "_"
 
     def is_alphanum(self, c):
-        return (
-            c >= "a"
-            and c <= "z"
-            or c >= "A"
-            and c <= "Z"
-            or c == "_"
-            or c >= "0"
-            and c <= "9"
-        )
+        return self.is_alpha(c) or self.is_digit(c)
 
     def undo_last(self):
         self.char_idx -= 1
+
+    def update_lines(self):
+        self.lines += 1
 
     def is_eof(self):
         return self.char_idx == len(self.source) - 1
@@ -154,6 +150,24 @@ class Tokenizer:
             self.add_token(lexem, start_pos, end_pos, TokenType.KEYWORDS)
         else:
             self.add_token(lexem, start_pos, end_pos, TokenType.IDENTIFIER)
+
+    def capture_literals(self, cur_token: str):
+        # literals can be a string or a number on the right hand side to an operator
+        # will make more sense once we have a grammar ready
+        done = False
+        lexem = cur_token
+        start_pos = self.char_idx
+        while not done:
+            next_token = self.get_next_token()
+            if next_token == TokenType.DOT.value:
+                lexem += next_token
+            elif not self.is_digit(next_token):
+                done = True
+            else:
+                lexem += next_token
+        self.add_token(
+            lexem, start_pos, start_pos + len(lexem), TokenType.NUMBER.value
+        )
 
     def parse_characters(
         self,
@@ -260,7 +274,9 @@ class Tokenizer:
                 else:
                     lexem += r
         else:
-            raise UnsupportedCommentException()
+            raise UnsupportedCommentException(
+                f"lexical error at line {self.lines}"
+            )
 
         self.add_token(
             lexem, start_pos, start_pos + len(lexem), TokenType.COMMENT
@@ -277,10 +293,11 @@ class Tokenizer:
             # skip over space, tabs and new line
             if (
                 next_token == TokenType.SPACE.value
-                or next_token == TokenType.NEWLINE.value
                 or next_token == TokenType.TAB.value
             ):
                 continue
+            if next_token == TokenType.NEWLINE.value:
+                self.update_lines()
             if next_token == TokenType.EQUAL.value:
                 self.parse_operators(next_token)
             elif next_token == TokenType.BANG.value:
@@ -296,9 +313,9 @@ class Tokenizer:
             elif self.is_alpha(next_token):
                 self.parse_characters(next_token)
             elif next_token == TokenType.SINGLE_QUOTE.value:
-                self.parse_characters(next_token, True)
+                self.capture_literals(next_token, True)
             elif self.is_digit(next_token):
-                self.parse_number(next_token)
+                self.capture_literals(next_token)
             elif next_token == TokenType.LEFT_BRACE.value:
                 self.add_token(
                     next_token, start_pos, end_pos, TokenType.LEFT_BRACE

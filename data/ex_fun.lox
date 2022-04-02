@@ -1,5 +1,5 @@
 fun(first_1, second_1) {
-    var num = 10;
+    var num = 10a2;
     /* test comment */
     return num;
 }
